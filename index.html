@@ -126,6 +126,7 @@
       const [newEventName, setNewEventName] = useState('');
       const [newEventPassword, setNewEventPassword] = useState('');
       const [passwordPromptId, setPasswordPromptId] = useState(null);
+      const [passwordPromptAction, setPasswordPromptAction] = useState('enter');
       const [eventPasswordInput, setEventPasswordInput] = useState('');
       const [passwordError, setPasswordError] = useState('');
       const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -216,6 +217,7 @@
       const handleEventClick = (event) => {
         if (role === 'organizer' && event.password) {
           setPasswordPromptId(event.id);
+          setPasswordPromptAction('enter');
           setEventPasswordInput('');
           setPasswordError('');
         } else {
@@ -223,14 +225,36 @@
         }
       };
 
-      const handlePasswordSubmit = (e) => {
+      const handleDeleteClick = (e, event) => {
+        e.stopPropagation();
+        if (event.password) {
+          setPasswordPromptId(event.id);
+          setPasswordPromptAction('delete');
+          setEventPasswordInput('');
+          setPasswordError('');
+        } else {
+          setConfirmDeleteId(event.id);
+        }
+      };
+
+      const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         e.stopPropagation();
         const targetEvent = events.find(ev => ev.id === passwordPromptId);
         if (targetEvent && targetEvent.password === eventPasswordInput) {
-          setCurrentEventId(passwordPromptId);
-          setRole('organizer');
-          setPasswordPromptId(null);
+          if (passwordPromptAction === 'delete') {
+            try {
+              await db.collection('events').doc(targetEvent.id).delete();
+              setPasswordPromptId(null);
+              if (currentEventId === targetEvent.id) setCurrentEventId(null);
+            } catch (error) {
+              alert("刪除失敗：" + error.message);
+            }
+          } else {
+            setCurrentEventId(passwordPromptId);
+            setRole('organizer');
+            setPasswordPromptId(null);
+          }
         } else {
           setPasswordError('密碼錯誤，請重新輸入。');
         }
@@ -408,7 +432,7 @@
                               </div>
                             ) : (
                               <button 
-                                onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(event.id); }}
+                                onClick={(e) => handleDeleteClick(e, event)}
                                 className="p-2.5 text-ink/30 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                                 title="刪除開團"
                               >
@@ -721,9 +745,11 @@
                     <div className="w-10 h-10 bg-brand-50 rounded-full flex items-center justify-center mr-3">
                       <IconLock className="w-5 h-5 text-brand-600" />
                     </div>
-                    開團者驗證
+                    {passwordPromptAction === 'delete' ? '刪除開團驗證' : '開團者驗證'}
                   </div>
-                  <p className="text-sm text-ink/60 text-center">請輸入密碼以行使開團者權限</p>
+                  <p className="text-sm text-ink/60 text-center">
+                    {passwordPromptAction === 'delete' ? '請輸入密碼以確認刪除此開團' : '請輸入密碼以行使開團者權限'}
+                  </p>
                   <input
                     type="password"
                     value={eventPasswordInput}
