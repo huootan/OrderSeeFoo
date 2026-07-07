@@ -5,18 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>分隊點餐系統 (即時連線版)</title>
   
+  <!-- 載入 Google Fonts: Playfair Display & Noto Serif/Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;700;900&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+
   <!-- 載入 Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- 載入 Firebase Compat (適用於簡單網頁) -->
+  <!-- 設定 Tailwind 自訂主題 (烘焙坊風格) -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fdf8f5',
+              100: '#f8efe6',
+              200: '#eedac5',
+              300: '#e1bd9d',
+              400: '#cf986c',
+              500: '#c17a44',
+              600: '#b36136',
+              700: '#95492d',
+              800: '#7a3e29',
+              900: '#623523',
+            },
+            surface: '#fbfaf8', // 溫暖的米白色背景
+            ink: '#2a2421',     // 深咖啡/炭灰色文字
+            paper: '#ffffff',   // 卡片白
+          },
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'sans-serif'],
+            serif: ['"Playfair Display"', '"Noto Serif TC"', 'serif'],
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(98, 53, 35, 0.05)',
+            'float': '0 10px 30px -5px rgba(98, 53, 35, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- 載入 Firebase Compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
-  <!-- 載入 React 與 Babel (為了在單一網頁中執行) -->
+  <!-- 載入 React 與 Babel -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <style>
+    /* 全局平滑過渡 */
+    * { transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+    body { background-color: #fbfaf8; color: #2a2421; }
+    /* 隱藏捲軸但可滾動 (美觀) */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #eedac5; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #cf986c; }
+  </style>
 </head>
 <body>
   <div id="root"></div>
@@ -49,7 +100,7 @@
     const IconLock = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>;
     const IconLoader = ({ className }) => <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>;
 
-    // 專用的 PriceInput，避免輸入時被 Firebase 延遲打斷
+    // 專用的 PriceInput
     const PriceInput = ({ order, onUpdate }) => {
       const [val, setVal] = useState(order.price);
       useEffect(() => { setVal(order.price); }, [order.price]);
@@ -61,7 +112,7 @@
           onChange={(e) => setVal(e.target.value)}
           onBlur={() => onUpdate(order.id, val)}
           placeholder="金額"
-          className="w-20 px-2 py-1 text-right border border-gray-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          className="w-20 px-2 py-1 text-right border-b border-brand-200 bg-transparent focus:outline-none focus:border-brand-500 font-medium text-ink transition-colors"
         />
       );
     };
@@ -269,40 +320,40 @@
 
       if (loading) {
         return (
-          <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center text-gray-500">
-            <IconLoader className="w-10 h-10 mb-4 text-blue-500" />
-            <p>連線到即時資料庫中...</p>
+          <div className="min-h-screen bg-surface flex flex-col items-center justify-center text-brand-600">
+            <IconLoader className="w-10 h-10 mb-4 text-brand-500" />
+            <p className="font-serif italic tracking-wider">Loading...</p>
           </div>
         );
       }
 
       const renderDashboard = () => (
-        <div className="max-w-md mx-auto p-4 space-y-6">
+        <div className="max-w-md mx-auto p-4 space-y-8 animate-fade-in mt-4">
           {role === 'organizer' && (
-            <form onSubmit={handleCreateEvent} className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-              <h2 className="text-lg font-bold mb-4 text-gray-700 flex items-center">
-                <IconPlus className="w-5 h-5 mr-1 text-blue-500" /> 建立新開團
+            <form onSubmit={handleCreateEvent} className="bg-paper rounded-2xl shadow-soft p-6 border border-brand-50">
+              <h2 className="text-xl font-serif font-bold mb-5 text-ink flex items-center">
+                <IconPlus className="w-5 h-5 mr-2 text-brand-500" /> 建立新開團
               </h2>
-              <div className="flex flex-col space-y-3">
+              <div className="flex flex-col space-y-4">
                 <input 
                   type="text" 
                   value={newEventName}
                   onChange={(e) => setNewEventName(e.target.value)}
-                  placeholder="輸入開團名稱 (例: 10/25 午餐 - 悟饕)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="輸入開團名稱 (例: 手工貝果團)"
+                  className="w-full px-4 py-3 border border-brand-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-brand-50/30 transition-colors"
                   required
                 />
-                <div className="flex space-x-2">
+                <div className="flex space-x-3">
                   <input 
                     type="text" 
                     value={newEventPassword}
                     onChange={(e) => setNewEventPassword(e.target.value)}
-                    placeholder="設定進入密碼 (可選填)"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="設定密碼 (選填)"
+                    className="flex-1 px-4 py-3 border border-brand-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-brand-50/30 transition-colors"
                   />
                   <button 
                     type="submit"
-                    className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                    className="bg-brand-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-brand-700 hover:shadow-lg transition-all whitespace-nowrap"
                   >
                     建立
                   </button>
@@ -311,16 +362,16 @@
             </form>
           )}
 
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-            <div className="p-4 bg-gray-50 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-700 flex items-center">
-                <IconCalendar className="w-5 h-5 mr-2 text-blue-500" /> 進行中的點餐
+          <div className="bg-paper rounded-2xl shadow-soft overflow-hidden border border-brand-50">
+            <div className="p-5 border-b border-brand-100 flex items-center justify-between">
+              <h2 className="text-xl font-serif font-bold text-ink flex items-center">
+                <IconCalendar className="w-5 h-5 mr-2 text-brand-500" /> 進行中的點餐
               </h2>
             </div>
             
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-brand-50">
               {events.length === 0 ? (
-                <div className="p-8 text-center text-gray-400 text-sm">
+                <div className="p-10 text-center text-ink/40 text-sm font-medium">
                   目前沒有任何進行中的開團。
                 </div>
               ) : (
@@ -328,39 +379,39 @@
                   <div 
                     key={event.id} 
                     onClick={() => handleEventClick(event)}
-                    className="p-4 hover:bg-blue-50 transition-colors cursor-pointer flex justify-between items-center group"
+                    className="p-5 hover:bg-brand-50/50 transition-colors cursor-pointer flex justify-between items-center group"
                   >
                     <div className="flex-1 pr-4">
-                      <h3 className="font-bold text-gray-800 text-lg mb-1 flex items-center">
-                          {event.password && <IconLock className="w-4 h-4 mr-2 text-gray-400" title="需要密碼" />}
+                      <h3 className="font-serif font-bold text-ink text-lg mb-1 flex items-center">
+                          {event.password && <IconLock className="w-4 h-4 mr-2 text-brand-400" title="需要密碼" />}
                           {event.name}
                         </h3>
-                        <div className="flex items-center text-sm text-gray-500 space-x-3">
+                        <div className="flex items-center text-sm text-ink/60 space-x-3">
                           <span>{event.date}</span>
-                          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                          <span className="bg-brand-100 text-brand-800 px-2.5 py-0.5 rounded-full text-xs font-medium tracking-wide">
                             {event.orders.length} 份訂單
                           </span>
                         </div>
                       </div>
                       
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-4">
                         {role === 'organizer' && (
                           <div className="text-right mr-2 hidden sm:block">
-                            <div className="text-xs text-gray-500">預估總額</div>
-                            <div className="font-bold text-gray-700">${calculateTotal(event.orders)}</div>
+                            <div className="text-xs text-ink/50 mb-0.5">預估總額</div>
+                            <div className="font-bold text-ink">${calculateTotal(event.orders)}</div>
                           </div>
                         )}
                         {role === 'organizer' && (
                           <div className="flex items-center">
                             {confirmDeleteId === event.id ? (
-                              <div className="flex items-center bg-red-50 rounded-lg p-1 space-x-1" onClick={(e) => e.stopPropagation()}>
-                                <button onClick={(e) => handleDeleteEvent(e, event.id)} className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">確定刪除</button>
-                                <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }} className="px-2 py-1 text-gray-600 text-xs rounded hover:bg-gray-200">取消</button>
+                              <div className="flex items-center bg-red-50 rounded-xl p-1.5 space-x-2" onClick={(e) => e.stopPropagation()}>
+                                <button onClick={(e) => handleDeleteEvent(e, event.id)} className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-lg shadow-sm hover:bg-red-600">刪除</button>
+                                <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }} className="px-3 py-1 text-ink/70 text-xs font-bold rounded-lg hover:bg-red-100">取消</button>
                               </div>
                             ) : (
                               <button 
                                 onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(event.id); }}
-                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                className="p-2.5 text-ink/30 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                                 title="刪除開團"
                               >
                                 <IconTrash className="w-5 h-5" />
@@ -368,7 +419,9 @@
                             )}
                           </div>
                         )}
-                        <IconChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                        <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center group-hover:bg-brand-100 transition-colors">
+                          <IconChevronRight className="w-4 h-4 text-brand-600" />
+                        </div>
                       </div>
                     </div>
                 ))
@@ -382,52 +435,54 @@
         if (!currentEvent) return null;
         
         return (
-          <div className="max-w-md mx-auto p-4 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-              <h2 className="text-lg font-bold mb-3 flex items-center text-gray-700">
-                <IconImage className="w-5 h-5 mr-2 text-blue-500" />
+          <div className="max-w-md mx-auto p-4 space-y-8 mt-4 animate-fade-in">
+            <div className="bg-paper rounded-2xl shadow-soft p-5 border border-brand-50">
+              <h2 className="text-xl font-serif font-bold mb-4 flex items-center text-ink">
+                <IconImage className="w-5 h-5 mr-2 text-brand-500" />
                 本日菜單
               </h2>
               
               {currentEvent.menuImage ? (
-                <div className="relative group rounded-lg overflow-hidden border border-gray-200 min-h-[100px] flex items-center justify-center bg-gray-50">
+                <div className="relative group rounded-xl overflow-hidden border border-brand-100 min-h-[120px] flex items-center justify-center bg-brand-50/30">
                   <img src={currentEvent.menuImage} alt="菜單" className="w-full h-auto object-contain max-h-96" />
                   {uploading && (
-                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
+                    <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm flex flex-col items-center justify-center text-white">
                       <IconLoader className="w-8 h-8 mb-2 text-white" />
-                      <span>上傳中...</span>
+                      <span className="font-medium tracking-wide">上傳中...</span>
                     </div>
                   )}
                   {role === 'organizer' && !uploading && (
                     <button 
                       onClick={triggerFileInput}
-                      className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute inset-0 bg-ink/40 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
                     >
-                      <IconCamera className="w-6 h-6 mr-2" /> 更換菜單
+                      <div className="bg-white/20 px-4 py-2 rounded-full flex items-center backdrop-blur-md">
+                        <IconCamera className="w-5 h-5 mr-2" /> <span className="font-medium">更換菜單</span>
+                      </div>
                     </button>
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 relative overflow-hidden">
+                <div className="flex flex-col items-center justify-center p-10 border-2 border-dashed border-brand-200 rounded-xl bg-brand-50/30 relative overflow-hidden transition-colors hover:bg-brand-50">
                   {uploading && (
-                    <div className="absolute inset-0 bg-white/80 z-10 flex flex-col items-center justify-center text-blue-600">
+                    <div className="absolute inset-0 bg-white/90 z-10 flex flex-col items-center justify-center text-brand-600 backdrop-blur-sm">
                       <IconLoader className="w-8 h-8 mb-2" />
-                      <span className="font-bold">上傳中...</span>
+                      <span className="font-bold tracking-wide">上傳中...</span>
                     </div>
                   )}
                   {role === 'organizer' ? (
                     <>
-                      <p className="text-gray-500 mb-4 text-sm text-center">目前還沒有菜單照片，請上傳一張讓大家參考。</p>
+                      <p className="text-ink/60 mb-5 text-sm text-center">目前還沒有菜單照片，請上傳一張讓大家參考。</p>
                       <button 
                         onClick={triggerFileInput}
-                        className="flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-medium disabled:opacity-50"
+                        className="flex items-center px-5 py-2.5 bg-brand-100 text-brand-800 rounded-full hover:bg-brand-200 font-bold disabled:opacity-50 transition-colors shadow-sm"
                         disabled={uploading}
                       >
-                        <IconCamera className="w-5 h-5 mr-2" /> 上傳菜單圖片
+                        <IconCamera className="w-5 h-5 mr-2" /> 上傳菜單
                       </button>
                     </>
                   ) : (
-                    <p className="text-gray-500 text-sm">開團者尚未上傳菜單照片</p>
+                    <p className="text-ink/50 text-sm font-medium">開團者尚未上傳菜單照片</p>
                   )}
                 </div>
               )}
@@ -444,7 +499,7 @@
               <div className="flex justify-end">
                 <button 
                   onClick={toggleEventClosed}
-                  className={`px-4 py-2 rounded-lg font-bold text-white shadow-sm transition-colors flex items-center ${currentEvent.isClosed ? 'bg-gray-500 hover:bg-gray-600' : 'bg-red-500 hover:bg-red-600'}`}
+                  className={`px-5 py-2.5 rounded-full font-bold text-white shadow-md transition-all flex items-center ${currentEvent.isClosed ? 'bg-ink hover:bg-ink/80' : 'bg-brand-600 hover:bg-brand-700 hover:shadow-lg'}`}
                 >
                   {currentEvent.isClosed ? '取消結單 (重新開放)' : '停止點餐 (結單)'}
                 </button>
@@ -452,88 +507,90 @@
             )}
 
             {role === 'user' && !currentEvent.isClosed && (
-              <form onSubmit={handleAddOrder} className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-                <h2 className="text-lg font-bold mb-4 text-gray-700">我要點餐</h2>
-                <div className="space-y-3">
+              <form onSubmit={handleAddOrder} className="bg-paper rounded-2xl shadow-float p-6 border border-brand-50 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-brand-400"></div>
+                <h2 className="text-xl font-serif font-bold mb-5 text-ink">我要點餐</h2>
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">姓名</label>
+                    <label className="block text-sm font-bold text-ink/70 mb-1.5 ml-1">姓名</label>
                     <input 
                       type="text" 
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
-                      placeholder="輸入你的名字 (例: 王大明)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="輸入你的名字"
+                      className="w-full px-4 py-3 border border-brand-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-surface transition-colors"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">餐點內容</label>
+                    <label className="block text-sm font-bold text-ink/70 mb-1.5 ml-1">餐點內容</label>
                     <input 
                       type="text" 
                       value={newItem}
                       onChange={(e) => setNewItem(e.target.value)}
-                      placeholder="輸入想吃的餐點 (例: 排骨飯 加飯)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="想吃什麼？"
+                      className="w-full px-4 py-3 border border-brand-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-surface transition-colors"
                       required
                     />
                   </div>
                   <button 
                     type="submit"
-                    className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center transition-colors"
+                    className="w-full bg-ink text-white font-bold py-3.5 px-4 rounded-xl shadow-md hover:bg-ink/90 flex items-center justify-center transition-all mt-2"
                   >
-                    <IconPlus className="w-5 h-5 mr-1" /> 送出訂單
+                    <IconPlus className="w-5 h-5 mr-2" /> 送出訂單
                   </button>
                 </div>
               </form>
             )}
 
             {role === 'user' && currentEvent.isClosed && (
-              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-xl text-center shadow-sm">
-                <p className="font-bold flex items-center justify-center">
-                  <IconLock className="w-5 h-5 mr-1" /> 此團已由開團者結單
-                </p>
-                <p className="text-sm mt-1">無法再新增或修改餐點囉！</p>
+              <div className="bg-brand-50 border border-brand-100 text-brand-900 p-5 rounded-2xl text-center shadow-soft">
+                <div className="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <IconLock className="w-6 h-6 text-brand-600" />
+                </div>
+                <p className="font-serif font-bold text-lg mb-1">此團已結單</p>
+                <p className="text-sm text-brand-800/80">主購已停止收單，無法再新增或修改餐點囉！</p>
               </div>
             )}
 
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-              <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                <h2 className="text-lg font-bold text-gray-700 flex items-center">
-                  <IconFileText className="w-5 h-5 mr-2 text-blue-500" /> 點餐清單
+            <div className="bg-paper rounded-2xl shadow-soft overflow-hidden border border-brand-50">
+              <div className="p-5 border-b border-brand-100 flex justify-between items-center bg-white">
+                <h2 className="text-xl font-serif font-bold text-ink flex items-center">
+                  <IconFileText className="w-5 h-5 mr-2 text-brand-500" /> 點餐清單
                 </h2>
-                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                <span className="text-sm bg-brand-50 border border-brand-100 text-brand-800 px-3 py-1 rounded-full font-bold shadow-sm">
                   共 {currentEvent.orders.length} 份
                 </span>
               </div>
               
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-brand-50">
                 {currentEvent.orders.length === 0 ? (
-                  <div className="p-8 text-center text-gray-400 text-sm">
+                  <div className="p-10 text-center text-ink/40 text-sm font-medium">
                     目前還沒有人點餐喔！
                   </div>
                 ) : (
                   currentEvent.orders.map(order => (
-                    <div key={order.id} className="p-4 hover:bg-gray-50 transition-colors">
+                    <div key={order.id} className="p-5 hover:bg-brand-50/30 transition-colors">
                       {editingOrderId === order.id && role === 'user' ? (
-                        <div className="space-y-2">
+                        <div className="space-y-3 bg-brand-50/50 p-4 rounded-xl border border-brand-100">
                           <input 
                             type="text" 
                             defaultValue={order.name}
                             id={`edit-name-${order.id}`}
-                            className="w-full px-3 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm focus:ring-1 focus:ring-brand-500"
                             placeholder="姓名"
                           />
                           <input 
                             type="text" 
                             defaultValue={order.item}
                             id={`edit-item-${order.id}`}
-                            className="w-full px-3 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm focus:ring-1 focus:ring-brand-500"
                             placeholder="餐點內容"
                           />
-                          <div className="flex justify-end space-x-2 pt-1">
+                          <div className="flex justify-end space-x-2 pt-2">
                             <button 
                               onClick={() => toggleEditMode(order.id)}
-                              className="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded hover:bg-gray-200 flex items-center"
+                              className="px-4 py-1.5 text-sm font-bold text-ink/60 bg-white border border-brand-200 rounded-lg hover:bg-brand-50 flex items-center shadow-sm"
                             >
                               <IconX className="w-4 h-4 mr-1" /> 取消
                             </button>
@@ -543,7 +600,7 @@
                                 const newI = document.getElementById(`edit-item-${order.id}`).value;
                                 handleUpdateOrder(order.id, newN, newI);
                               }}
-                              className="px-3 py-1 text-sm text-white bg-green-500 rounded hover:bg-green-600 flex items-center"
+                              className="px-4 py-1.5 text-sm font-bold text-white bg-brand-600 rounded-lg hover:bg-brand-700 flex items-center shadow-sm"
                             >
                               <IconCheck className="w-4 h-4 mr-1" /> 儲存
                             </button>
@@ -552,37 +609,37 @@
                       ) : (
                         <div className="flex justify-between items-start">
                           <div className="flex-1 pr-4">
-                            <div className="font-bold text-gray-800 text-base">{order.name}</div>
-                            <div className="text-gray-600 text-sm mt-0.5">{order.item}</div>
+                            <div className="font-bold text-ink text-base">{order.name}</div>
+                            <div className="text-ink/70 text-sm mt-1">{order.item}</div>
                           </div>
                           
                           <div className="flex flex-col items-end space-y-2">
                             {role === 'organizer' ? (
-                              <div className="flex items-center space-x-2">
-                                <button 
-                                  onClick={() => handleTogglePaid(order.id)}
-                                  className={`px-2 py-1 text-xs rounded font-bold transition-colors ${order.hasPaid ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-                                >
-                                  {order.hasPaid ? '已付款' : '未付款'}
-                                </button>
+                              <div className="flex flex-col items-end space-y-2 mt-1">
                                 <div className="flex items-center">
-                                  <span className="text-sm text-gray-500 mr-1">$</span>
+                                  <span className="text-sm text-brand-600 font-bold mr-1">$</span>
                                   <PriceInput order={order} onUpdate={handleUpdatePrice} />
                                 </div>
+                                <button 
+                                  onClick={() => handleTogglePaid(order.id)}
+                                  className={`px-3 py-1 text-xs rounded-full font-bold transition-all shadow-sm ${order.hasPaid ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-surface border border-brand-200 text-ink/60 hover:bg-brand-50'}`}
+                                >
+                                  {order.hasPaid ? '✓ 已付款' : '未付款'}
+                                </button>
                               </div>
                             ) : (
                               !currentEvent.isClosed && (
-                                <div className="flex space-x-2">
+                                <div className="flex space-x-1">
                                   <button 
                                     onClick={() => toggleEditMode(order.id)}
-                                    className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                    className="p-2 text-brand-500 hover:bg-brand-50 rounded-full transition-colors"
                                     title="編輯"
                                   >
                                     <IconEdit className="w-4 h-4" />
                                   </button>
                                   <button 
                                     onClick={() => handleDeleteOrder(order.id)}
-                                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    className="p-2 text-ink/30 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                                     title="刪除"
                                   >
                                     <IconTrash className="w-4 h-4" />
@@ -591,14 +648,14 @@
                               )
                             )}
                             {role === 'user' && (order.price || currentEvent.isClosed) && (
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-2 mt-1">
                                 {order.price && (
-                                  <div className="text-green-600 font-bold text-sm bg-green-50 px-2 py-1 rounded">
+                                  <div className="text-brand-700 font-bold text-sm bg-brand-50 border border-brand-100 px-2 py-1 rounded-md shadow-sm">
                                     ${order.price}
                                   </div>
                                 )}
-                                <div className={`text-xs px-2 py-1 rounded font-bold ${order.hasPaid ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'}`}>
-                                  {order.hasPaid ? '已付款' : '未付款'}
+                                <div className={`text-xs px-2 py-1 rounded-md font-bold shadow-sm ${order.hasPaid ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-surface border border-brand-200 text-ink/50'}`}>
+                                  {order.hasPaid ? '✓ 已付款' : '未付款'}
                                 </div>
                               </div>
                             )}
@@ -611,9 +668,9 @@
               </div>
               
               {role === 'organizer' && currentEvent.orders.length > 0 && (
-                <div className="bg-blue-50 p-4 border-t border-blue-100 flex justify-between items-center">
-                  <span className="font-bold text-gray-700">本次團購總金額：</span>
-                  <span className="text-2xl font-black text-blue-600">${calculateTotal(currentEvent.orders)}</span>
+                <div className="bg-brand-50 p-5 border-t border-brand-100 flex justify-between items-center">
+                  <span className="font-serif font-bold text-ink">本次團購總金額：</span>
+                  <span className="text-2xl font-black text-brand-600">${calculateTotal(currentEvent.orders)}</span>
                 </div>
               )}
             </div>
@@ -622,62 +679,65 @@
       };
 
       return (
-        <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-20">
-          <div className="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
-            <div className="flex items-center">
+        <div className="min-h-screen bg-surface text-ink font-sans pb-24 selection:bg-brand-200">
+          <div className="bg-white/80 backdrop-blur-md text-ink sticky top-0 z-20 px-4 py-4 shadow-sm border-b border-brand-100 flex justify-between items-center transition-all">
+            <div className="flex items-center max-w-[60%]">
               {currentEventId ? (
                 <button 
                   onClick={() => setCurrentEventId(null)}
-                  className="mr-3 p-1 hover:bg-blue-700 rounded-full transition-colors flex items-center"
+                  className="mr-2 p-1.5 hover:bg-brand-50 rounded-full transition-colors flex items-center text-brand-600 shrink-0"
                 >
-                  <IconArrowLeft className="w-6 h-6" />
+                  <IconArrowLeft className="w-5 h-5" />
                 </button>
               ) : null}
-              <h1 className="text-xl font-bold truncate max-w-[150px] sm:max-w-xs">
-                {currentEventId && currentEvent ? currentEvent.name : '🍔 分隊點餐系統'}
+              <h1 className="text-xl sm:text-2xl font-serif font-bold truncate tracking-wide text-ink">
+                {currentEventId && currentEvent ? currentEvent.name : <><span className="text-brand-600 italic mr-1">Order</span> 點餐系統</>}
               </h1>
             </div>
             
-            <div className="flex bg-blue-700 rounded-lg p-1">
+            <div className="flex bg-brand-50 rounded-full p-1 border border-brand-100 shadow-inner">
               <button
                 onClick={() => handleRoleChange('user')}
-                className={`flex items-center px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-colors ${role === 'user' ? 'bg-white text-blue-700 shadow' : 'text-blue-100 hover:bg-blue-600'}`}
+                className={`flex items-center px-3 py-1.5 sm:px-4 sm:py-1.5 text-xs sm:text-sm rounded-full font-bold transition-all ${role === 'user' ? 'bg-white text-brand-700 shadow-sm border border-brand-100/50' : 'text-ink/60 hover:text-ink'}`}
               >
-                <IconUser className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">使用者</span>
+                <span className="hidden sm:inline mr-1">🍔</span> 使用者
               </button>
               <button
                 onClick={() => handleRoleChange('organizer')}
-                className={`flex items-center px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-colors ${role === 'organizer' ? 'bg-white text-blue-700 shadow' : 'text-blue-100 hover:bg-blue-600'}`}
+                className={`flex items-center px-3 py-1.5 sm:px-4 sm:py-1.5 text-xs sm:text-sm rounded-full font-bold transition-all ${role === 'organizer' ? 'bg-white text-brand-700 shadow-sm border border-brand-100/50' : 'text-ink/60 hover:text-ink'}`}
               >
-                <IconUserCog className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">開團者</span>
+                <span className="hidden sm:inline mr-1">👑</span> 開團者
               </button>
             </div>
           </div>
-          <div className="mt-4">
+          
+          <div className="mt-6 px-2">
             {!currentEventId ? renderDashboard() : renderEventDetail()}
           </div>
 
           {passwordPromptId && (
-            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-                <form onSubmit={handlePasswordSubmit} className="flex flex-col space-y-4">
-                  <div className="flex items-center text-gray-800 font-bold text-lg">
-                    <IconLock className="w-5 h-5 mr-2 text-blue-500" />
+            <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+              <div className="bg-paper rounded-2xl shadow-float p-8 w-full max-w-sm border border-brand-50">
+                <form onSubmit={handlePasswordSubmit} className="flex flex-col space-y-5">
+                  <div className="flex items-center text-ink font-serif font-bold text-xl justify-center mb-2">
+                    <div className="w-10 h-10 bg-brand-50 rounded-full flex items-center justify-center mr-3">
+                      <IconLock className="w-5 h-5 text-brand-600" />
+                    </div>
                     開團者驗證
                   </div>
-                  <p className="text-sm text-gray-500">請輸入密碼以行使開團者權限：</p>
+                  <p className="text-sm text-ink/60 text-center">請輸入密碼以行使開團者權限</p>
                   <input
                     type="password"
                     value={eventPasswordInput}
                     onChange={(e) => setEventPasswordInput(e.target.value)}
                     placeholder="請輸入密碼"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-brand-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-center tracking-widest bg-surface"
                     autoFocus
                   />
-                  {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
-                  <div className="flex justify-end space-x-2 pt-2">
-                    <button type="button" onClick={() => setPasswordPromptId(null)} className="px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition-colors">取消</button>
-                    <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors">確認</button>
+                  {passwordError && <p className="text-red-500 text-sm text-center font-medium">{passwordError}</p>}
+                  <div className="flex justify-center space-x-3 pt-4">
+                    <button type="button" onClick={() => setPasswordPromptId(null)} className="px-6 py-2.5 bg-surface border border-brand-200 text-ink/70 font-bold rounded-full hover:bg-brand-50 transition-colors w-1/2">取消</button>
+                    <button type="submit" className="px-6 py-2.5 bg-ink text-white font-bold rounded-full shadow-md hover:bg-ink/90 transition-all w-1/2">確認</button>
                   </div>
                 </form>
               </div>
