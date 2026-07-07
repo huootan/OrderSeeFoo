@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分隊點餐系統 (即時連線版)</title>
+  
+  <!-- 載入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 載入 Firebase Compat (適用於簡單網頁) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+
+  <!-- 載入 React 與 Babel (為了在單一網頁中執行) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="config.js"></script>
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    // --- Firebase 初始化區塊 ---
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // --- 圖示元件定義區 ---
+    const IconPlus = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+    const IconTrash = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
+    const IconCamera = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>;
+    const IconEdit = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
+    const IconCheck = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>;
+    const IconX = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
+    const IconImage = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>;
+    const IconArrowLeft = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>;
+    const IconCalendar = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>;
+    const IconFileText = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>;
+    const IconChevronRight = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>;
+    const IconUser = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
+    const IconUserCog = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 11v2"></path><path d="M19 15v2"></path><path d="M21.6 12.5l-1.7 1"></path><path d="M17.4 15.5l-1.7 1"></path><path d="M21.6 15.5l-1.7-1"></path><path d="M17.4 12.5l-1.7-1"></path><circle cx="19" cy="13" r="2"></circle></svg>;
+    const IconLock = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>;
+    const IconLoader = ({ className }) => <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>;
+
+    // 專用的 PriceInput，避免輸入時被 Firebase 延遲打斷
+    const PriceInput = ({ order, onUpdate }) => {
+      const [val, setVal] = useState(order.price);
+      useEffect(() => { setVal(order.price); }, [order.price]);
+      return (
+        <input 
+          type="number" 
+          min="0" 
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onBlur={() => onUpdate(order.id, val)}
+          placeholder="金額"
+          className="w-20 px-2 py-1 text-right border border-gray-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        />
+      );
+    };
+
+    // --- 主程式區塊 ---
+    function App() {
+      const [role, setRole] = useState('user');
+      const [events, setEvents] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [currentEventId, setCurrentEventId] = useState(null);
+      const [newEventName, setNewEventName] = useState('');
+      const [newEventPassword, setNewEventPassword] = useState('');
+      const [passwordPromptId, setPasswordPromptId] = useState(null);
+      const [eventPasswordInput, setEventPasswordInput] = useState('');
+      const [passwordError, setPasswordError] = useState('');
+      const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+      const [newName, setNewName] = useState('');
+      const [newItem, setNewItem] = useState('');
+      const [editingOrderId, setEditingOrderId] = useState(null);
+      const [uploading, setUploading] = useState(false);
+      const fileInputRef = useRef(null);
+
+      // Firestore 即時監聽
+      useEffect(() => {
+        const unsubscribe = db.collection('events').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+          const eventsData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setEvents(eventsData);
+          setLoading(false);
+        }, (error) => {
+          console.error("載入資料失敗:", error);
+          setLoading(false);
+        });
+
+        return () => unsubscribe();
+      }, []);
+
+      const currentEvent = events.find(e => e.id === currentEventId);
+
+      const handleCreateEvent = async (e) => {
+        e.preventDefault();
+        if (!newEventName.trim()) return;
+        try {
+          await db.collection('events').add({
+            name: newEventName.trim(),
+            password: newEventPassword.trim(),
+            date: new Date().toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            menuImage: null,
+            orders: [],
+            isClosed: false
+          });
+          setNewEventName('');
+          setNewEventPassword('');
+        } catch (error) {
+          console.error("Error creating event:", error);
+          alert("建立失敗：" + error.message);
+        }
+      };
+
+      const handleDeleteEvent = async (e, id) => {
+        e.stopPropagation();
+        try {
+          await db.collection('events').doc(id).delete();
+          setConfirmDeleteId(null);
+          if (currentEventId === id) setCurrentEventId(null);
+        } catch (error) {
+          alert("刪除失敗：" + error.message);
+        }
+      };
+
+      const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (file && currentEventId) {
+          setUploading(true);
+          try {
+            const storageRef = storage.ref();
+            const fileRef = storageRef.child(`menus/${currentEventId}/${Date.now()}_${file.name}`);
+            await fileRef.put(file);
+            const url = await fileRef.getDownloadURL();
+            await db.collection('events').doc(currentEventId).update({
+              menuImage: url
+            });
+          } catch (error) {
+            console.error("Error uploading image:", error);
+            alert("上傳失敗：" + error.message);
+          } finally {
+            setUploading(false);
+          }
+        }
+      };
+
+      const triggerFileInput = () => {
+        if (fileInputRef.current) {
+          fileInputRef.current.click();
+        }
+      };
+
+      const handleEventClick = (event) => {
+        if (role === 'organizer' && event.password) {
+          setPasswordPromptId(event.id);
+          setEventPasswordInput('');
+          setPasswordError('');
+        } else {
+          setCurrentEventId(event.id);
+        }
+      };
+
+      const handlePasswordSubmit = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const targetEvent = events.find(ev => ev.id === passwordPromptId);
+        if (targetEvent && targetEvent.password === eventPasswordInput) {
+          setCurrentEventId(passwordPromptId);
+          setRole('organizer');
+          setPasswordPromptId(null);
+        } else {
+          setPasswordError('密碼錯誤，請重新輸入。');
+        }
+      };
+
+      const handleRoleChange = (newRole) => {
+        if (newRole === 'organizer') {
+          setCurrentEventId(null);
+          setPasswordPromptId(null);
+          setEventPasswordInput('');
+          setPasswordError('');
+        }
+        setRole(newRole);
+      };
+
+      const toggleEventClosed = async () => {
+        if (!currentEvent) return;
+        await db.collection('events').doc(currentEvent.id).update({
+          isClosed: !currentEvent.isClosed
+        });
+      };
+
+      const handleAddOrder = async (e) => {
+        e.preventDefault();
+        if (!newName.trim() || !newItem.trim() || !currentEvent) return;
+        
+        const newOrder = {
+          id: Date.now().toString() + Math.random().toString(36).substring(7),
+          name: newName.trim(),
+          item: newItem.trim(),
+          price: '',
+          hasPaid: false
+        };
+        
+        try {
+          await db.collection('events').doc(currentEvent.id).update({
+            orders: firebase.firestore.FieldValue.arrayUnion(newOrder)
+          });
+          setNewName('');
+          setNewItem('');
+        } catch (error) {
+          alert("點餐失敗：" + error.message);
+        }
+      };
+
+      const handleDeleteOrder = async (orderId) => {
+        if (!currentEvent) return;
+        const newOrders = currentEvent.orders.filter(order => order.id !== orderId);
+        await db.collection('events').doc(currentEvent.id).update({ orders: newOrders });
+      };
+
+      const toggleEditMode = (orderId) => {
+        setEditingOrderId(editingOrderId === orderId ? null : orderId);
+      };
+
+      const handleUpdateOrder = async (orderId, updatedName, updatedItem) => {
+        if (!currentEvent) return;
+        const newOrders = currentEvent.orders.map(order => 
+          order.id === orderId ? { ...order, name: updatedName, item: updatedItem } : order
+        );
+        await db.collection('events').doc(currentEvent.id).update({ orders: newOrders });
+        setEditingOrderId(null);
+      };
+
+      const handleUpdatePrice = async (orderId, price) => {
+        if (!currentEvent) return;
+        const newOrders = currentEvent.orders.map(order => 
+          order.id === orderId ? { ...order, price: price } : order
+        );
+        await db.collection('events').doc(currentEvent.id).update({ orders: newOrders });
+      };
+
+      const handleTogglePaid = async (orderId) => {
+        if (!currentEvent) return;
+        const newOrders = currentEvent.orders.map(order => 
+          order.id === orderId ? { ...order, hasPaid: !order.hasPaid } : order
+        );
+        await db.collection('events').doc(currentEvent.id).update({ orders: newOrders });
+      };
+
+      const calculateTotal = (orders) => {
+        return orders.reduce((total, order) => {
+          const priceNum = parseInt(order.price, 10);
+          return total + (isNaN(priceNum) ? 0 : priceNum);
+        }, 0);
+      };
+
+      if (loading) {
+        return (
+          <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center text-gray-500">
+            <IconLoader className="w-10 h-10 mb-4 text-blue-500" />
+            <p>連線到即時資料庫中...</p>
+          </div>
+        );
+      }
+
+      const renderDashboard = () => (
+        <div className="max-w-md mx-auto p-4 space-y-6">
+          {role === 'organizer' && (
+            <form onSubmit={handleCreateEvent} className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+              <h2 className="text-lg font-bold mb-4 text-gray-700 flex items-center">
+                <IconPlus className="w-5 h-5 mr-1 text-blue-500" /> 建立新開團
+              </h2>
+              <div className="flex flex-col space-y-3">
+                <input 
+                  type="text" 
+                  value={newEventName}
+                  onChange={(e) => setNewEventName(e.target.value)}
+                  placeholder="輸入開團名稱 (例: 10/25 午餐 - 悟饕)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                <div className="flex space-x-2">
+                  <input 
+                    type="text" 
+                    value={newEventPassword}
+                    onChange={(e) => setNewEventPassword(e.target.value)}
+                    placeholder="設定進入密碼 (可選填)"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button 
+                    type="submit"
+                    className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                  >
+                    建立
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+            <div className="p-4 bg-gray-50 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-700 flex items-center">
+                <IconCalendar className="w-5 h-5 mr-2 text-blue-500" /> 進行中的點餐
+              </h2>
+            </div>
+            
+            <div className="divide-y divide-gray-100">
+              {events.length === 0 ? (
+                <div className="p-8 text-center text-gray-400 text-sm">
+                  目前沒有任何進行中的開團。
+                </div>
+              ) : (
+                events.map(event => (
+                  <div 
+                    key={event.id} 
+                    onClick={() => handleEventClick(event)}
+                    className="p-4 hover:bg-blue-50 transition-colors cursor-pointer flex justify-between items-center group"
+                  >
+                    <div className="flex-1 pr-4">
+                      <h3 className="font-bold text-gray-800 text-lg mb-1 flex items-center">
+                          {event.password && <IconLock className="w-4 h-4 mr-2 text-gray-400" title="需要密碼" />}
+                          {event.name}
+                        </h3>
+                        <div className="flex items-center text-sm text-gray-500 space-x-3">
+                          <span>{event.date}</span>
+                          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                            {event.orders.length} 份訂單
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-3">
+                        {role === 'organizer' && (
+                          <div className="text-right mr-2 hidden sm:block">
+                            <div className="text-xs text-gray-500">預估總額</div>
+                            <div className="font-bold text-gray-700">${calculateTotal(event.orders)}</div>
+                          </div>
+                        )}
+                        {role === 'organizer' && (
+                          <div className="flex items-center">
+                            {confirmDeleteId === event.id ? (
+                              <div className="flex items-center bg-red-50 rounded-lg p-1 space-x-1" onClick={(e) => e.stopPropagation()}>
+                                <button onClick={(e) => handleDeleteEvent(e, event.id)} className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">確定刪除</button>
+                                <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }} className="px-2 py-1 text-gray-600 text-xs rounded hover:bg-gray-200">取消</button>
+                              </div>
+                            ) : (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(event.id); }}
+                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                title="刪除開團"
+                              >
+                                <IconTrash className="w-5 h-5" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        <IconChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                      </div>
+                    </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      );
+
+      const renderEventDetail = () => {
+        if (!currentEvent) return null;
+        
+        return (
+          <div className="max-w-md mx-auto p-4 space-y-6">
+            <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+              <h2 className="text-lg font-bold mb-3 flex items-center text-gray-700">
+                <IconImage className="w-5 h-5 mr-2 text-blue-500" />
+                本日菜單
+              </h2>
+              
+              {currentEvent.menuImage ? (
+                <div className="relative group rounded-lg overflow-hidden border border-gray-200 min-h-[100px] flex items-center justify-center bg-gray-50">
+                  <img src={currentEvent.menuImage} alt="菜單" className="w-full h-auto object-contain max-h-96" />
+                  {uploading && (
+                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
+                      <IconLoader className="w-8 h-8 mb-2 text-white" />
+                      <span>上傳中...</span>
+                    </div>
+                  )}
+                  {role === 'organizer' && !uploading && (
+                    <button 
+                      onClick={triggerFileInput}
+                      className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <IconCamera className="w-6 h-6 mr-2" /> 更換菜單
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 relative overflow-hidden">
+                  {uploading && (
+                    <div className="absolute inset-0 bg-white/80 z-10 flex flex-col items-center justify-center text-blue-600">
+                      <IconLoader className="w-8 h-8 mb-2" />
+                      <span className="font-bold">上傳中...</span>
+                    </div>
+                  )}
+                  {role === 'organizer' ? (
+                    <>
+                      <p className="text-gray-500 mb-4 text-sm text-center">目前還沒有菜單照片，請上傳一張讓大家參考。</p>
+                      <button 
+                        onClick={triggerFileInput}
+                        className="flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-medium disabled:opacity-50"
+                        disabled={uploading}
+                      >
+                        <IconCamera className="w-5 h-5 mr-2" /> 上傳菜單圖片
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-gray-500 text-sm">開團者尚未上傳菜單照片</p>
+                  )}
+                </div>
+              )}
+              <input 
+                type="file" 
+                accept="image/*" 
+                ref={fileInputRef} 
+                onChange={handleImageUpload} 
+                className="hidden" 
+              />
+            </div>
+
+            {role === 'organizer' && (
+              <div className="flex justify-end">
+                <button 
+                  onClick={toggleEventClosed}
+                  className={`px-4 py-2 rounded-lg font-bold text-white shadow-sm transition-colors flex items-center ${currentEvent.isClosed ? 'bg-gray-500 hover:bg-gray-600' : 'bg-red-500 hover:bg-red-600'}`}
+                >
+                  {currentEvent.isClosed ? '取消結單 (重新開放)' : '停止點餐 (結單)'}
+                </button>
+              </div>
+            )}
+
+            {role === 'user' && !currentEvent.isClosed && (
+              <form onSubmit={handleAddOrder} className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <h2 className="text-lg font-bold mb-4 text-gray-700">我要點餐</h2>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">姓名</label>
+                    <input 
+                      type="text" 
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="輸入你的名字 (例: 王大明)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">餐點內容</label>
+                    <input 
+                      type="text" 
+                      value={newItem}
+                      onChange={(e) => setNewItem(e.target.value)}
+                      placeholder="輸入想吃的餐點 (例: 排骨飯 加飯)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <button 
+                    type="submit"
+                    className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center transition-colors"
+                  >
+                    <IconPlus className="w-5 h-5 mr-1" /> 送出訂單
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {role === 'user' && currentEvent.isClosed && (
+              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-xl text-center shadow-sm">
+                <p className="font-bold flex items-center justify-center">
+                  <IconLock className="w-5 h-5 mr-1" /> 此團已由開團者結單
+                </p>
+                <p className="text-sm mt-1">無法再新增或修改餐點囉！</p>
+              </div>
+            )}
+
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+              <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <h2 className="text-lg font-bold text-gray-700 flex items-center">
+                  <IconFileText className="w-5 h-5 mr-2 text-blue-500" /> 點餐清單
+                </h2>
+                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                  共 {currentEvent.orders.length} 份
+                </span>
+              </div>
+              
+              <div className="divide-y divide-gray-100">
+                {currentEvent.orders.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400 text-sm">
+                    目前還沒有人點餐喔！
+                  </div>
+                ) : (
+                  currentEvent.orders.map(order => (
+                    <div key={order.id} className="p-4 hover:bg-gray-50 transition-colors">
+                      {editingOrderId === order.id && role === 'user' ? (
+                        <div className="space-y-2">
+                          <input 
+                            type="text" 
+                            defaultValue={order.name}
+                            id={`edit-name-${order.id}`}
+                            className="w-full px-3 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500"
+                            placeholder="姓名"
+                          />
+                          <input 
+                            type="text" 
+                            defaultValue={order.item}
+                            id={`edit-item-${order.id}`}
+                            className="w-full px-3 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500"
+                            placeholder="餐點內容"
+                          />
+                          <div className="flex justify-end space-x-2 pt-1">
+                            <button 
+                              onClick={() => toggleEditMode(order.id)}
+                              className="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded hover:bg-gray-200 flex items-center"
+                            >
+                              <IconX className="w-4 h-4 mr-1" /> 取消
+                            </button>
+                            <button 
+                              onClick={() => {
+                                const newN = document.getElementById(`edit-name-${order.id}`).value;
+                                const newI = document.getElementById(`edit-item-${order.id}`).value;
+                                handleUpdateOrder(order.id, newN, newI);
+                              }}
+                              className="px-3 py-1 text-sm text-white bg-green-500 rounded hover:bg-green-600 flex items-center"
+                            >
+                              <IconCheck className="w-4 h-4 mr-1" /> 儲存
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 pr-4">
+                            <div className="font-bold text-gray-800 text-base">{order.name}</div>
+                            <div className="text-gray-600 text-sm mt-0.5">{order.item}</div>
+                          </div>
+                          
+                          <div className="flex flex-col items-end space-y-2">
+                            {role === 'organizer' ? (
+                              <div className="flex items-center space-x-2">
+                                <button 
+                                  onClick={() => handleTogglePaid(order.id)}
+                                  className={`px-2 py-1 text-xs rounded font-bold transition-colors ${order.hasPaid ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                >
+                                  {order.hasPaid ? '已付款' : '未付款'}
+                                </button>
+                                <div className="flex items-center">
+                                  <span className="text-sm text-gray-500 mr-1">$</span>
+                                  <PriceInput order={order} onUpdate={handleUpdatePrice} />
+                                </div>
+                              </div>
+                            ) : (
+                              !currentEvent.isClosed && (
+                                <div className="flex space-x-2">
+                                  <button 
+                                    onClick={() => toggleEditMode(order.id)}
+                                    className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="編輯"
+                                  >
+                                    <IconEdit className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteOrder(order.id)}
+                                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="刪除"
+                                  >
+                                    <IconTrash className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )
+                            )}
+                            {role === 'user' && (order.price || currentEvent.isClosed) && (
+                              <div className="flex items-center space-x-2">
+                                {order.price && (
+                                  <div className="text-green-600 font-bold text-sm bg-green-50 px-2 py-1 rounded">
+                                    ${order.price}
+                                  </div>
+                                )}
+                                <div className={`text-xs px-2 py-1 rounded font-bold ${order.hasPaid ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'}`}>
+                                  {order.hasPaid ? '已付款' : '未付款'}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+              
+              {role === 'organizer' && currentEvent.orders.length > 0 && (
+                <div className="bg-blue-50 p-4 border-t border-blue-100 flex justify-between items-center">
+                  <span className="font-bold text-gray-700">本次團購總金額：</span>
+                  <span className="text-2xl font-black text-blue-600">${calculateTotal(currentEvent.orders)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      return (
+        <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-20">
+          <div className="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
+            <div className="flex items-center">
+              {currentEventId ? (
+                <button 
+                  onClick={() => setCurrentEventId(null)}
+                  className="mr-3 p-1 hover:bg-blue-700 rounded-full transition-colors flex items-center"
+                >
+                  <IconArrowLeft className="w-6 h-6" />
+                </button>
+              ) : null}
+              <h1 className="text-xl font-bold truncate max-w-[150px] sm:max-w-xs">
+                {currentEventId && currentEvent ? currentEvent.name : '🍔 分隊點餐系統'}
+              </h1>
+            </div>
+            
+            <div className="flex bg-blue-700 rounded-lg p-1">
+              <button
+                onClick={() => handleRoleChange('user')}
+                className={`flex items-center px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-colors ${role === 'user' ? 'bg-white text-blue-700 shadow' : 'text-blue-100 hover:bg-blue-600'}`}
+              >
+                <IconUser className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">使用者</span>
+              </button>
+              <button
+                onClick={() => handleRoleChange('organizer')}
+                className={`flex items-center px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-colors ${role === 'organizer' ? 'bg-white text-blue-700 shadow' : 'text-blue-100 hover:bg-blue-600'}`}
+              >
+                <IconUserCog className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">開團者</span>
+              </button>
+            </div>
+          </div>
+          <div className="mt-4">
+            {!currentEventId ? renderDashboard() : renderEventDetail()}
+          </div>
+
+          {passwordPromptId && (
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+                <form onSubmit={handlePasswordSubmit} className="flex flex-col space-y-4">
+                  <div className="flex items-center text-gray-800 font-bold text-lg">
+                    <IconLock className="w-5 h-5 mr-2 text-blue-500" />
+                    開團者驗證
+                  </div>
+                  <p className="text-sm text-gray-500">請輸入密碼以行使開團者權限：</p>
+                  <input
+                    type="password"
+                    value={eventPasswordInput}
+                    onChange={(e) => setEventPasswordInput(e.target.value)}
+                    placeholder="請輸入密碼"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                  {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
+                  <div className="flex justify-end space-x-2 pt-2">
+                    <button type="button" onClick={() => setPasswordPromptId(null)} className="px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition-colors">取消</button>
+                    <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors">確認</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
