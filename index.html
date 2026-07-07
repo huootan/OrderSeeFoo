@@ -104,7 +104,7 @@
           value={val}
           onChange={(e) => setVal(e.target.value)}
           onBlur={() => onUpdate(order.id, val)}
-          placeholder="PRICE"
+          placeholder="金額"
           className="w-16 px-1 py-1 text-right border-b-2 border-gray-200 bg-transparent focus:outline-none focus:border-black font-display font-bold text-black transition-colors placeholder-gray-300"
         />
       );
@@ -323,10 +323,10 @@
         <div className="max-w-3xl mx-auto px-4 py-12 space-y-16">
           {role === 'organizer' && (
             <section>
-              <h2 className="font-display font-black text-2xl tracking-[0.2em] uppercase mb-8 text-center border-b-2 border-black pb-4">Create Event</h2>
+              <h2 className="font-display font-black text-2xl tracking-[0.2em] uppercase mb-8 text-center border-b-2 border-black pb-4">建立開團</h2>
               <form onSubmit={handleCreateEvent} className="space-y-6">
                 <div>
-                  <label className="block font-display font-bold text-xs tracking-widest text-gray-500 mb-2 uppercase">Event Name</label>
+                  <label className="block font-display font-bold text-xs tracking-widest text-gray-500 mb-2 uppercase">開團名稱</label>
                   <input 
                     type="text" 
                     value={newEventName}
@@ -337,7 +337,7 @@
                   />
                 </div>
                 <div>
-                  <label className="block font-display font-bold text-xs tracking-widest text-gray-500 mb-2 uppercase">Password (Optional)</label>
+                  <label className="block font-display font-bold text-xs tracking-widest text-gray-500 mb-2 uppercase">設定密碼 (選填)</label>
                   <input 
                     type="text" 
                     value={newEventPassword}
@@ -348,7 +348,7 @@
                 </div>
                 <div className="pt-4">
                   <button type="submit" className="w-full sm:w-auto bg-black text-white border-2 border-black font-display font-bold tracking-[0.2em] uppercase py-4 px-10 hover:bg-white hover:text-black transition-colors">
-                    Create Now
+                    立即建立
                   </button>
                 </div>
               </form>
@@ -356,12 +356,12 @@
           )}
 
           <section>
-            <h2 className="font-display font-black text-2xl tracking-[0.2em] uppercase mb-8 text-center border-b-2 border-black pb-4">Active Events</h2>
+            <h2 className="font-display font-black text-2xl tracking-[0.2em] uppercase mb-8 text-center border-b-2 border-black pb-4">進行中的開團</h2>
             
             <div className="space-y-6">
               {events.length === 0 ? (
                 <div className="text-center text-gray-400 font-display tracking-widest py-10 uppercase text-sm">
-                  No active events
+                  目前沒有進行中的開團
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -380,8 +380,8 @@
                             <div onClick={(e) => e.stopPropagation()} className="z-10 relative">
                               {confirmDeleteId === event.id ? (
                                 <div className="flex bg-white text-black border-2 border-black">
-                                  <button onClick={(e) => handleDeleteEvent(e, event.id)} className="px-3 py-1 font-bold text-xs uppercase hover:bg-black hover:text-white transition-colors">Del</button>
-                                  <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }} className="px-3 py-1 font-bold text-xs uppercase border-l-2 border-black hover:bg-gray-200 transition-colors">X</button>
+                                  <button onClick={(e) => handleDeleteEvent(e, event.id)} className="px-3 py-1 font-bold text-xs uppercase hover:bg-black hover:text-white transition-colors">刪除</button>
+                                  <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }} className="px-3 py-1 font-bold text-xs uppercase border-l-2 border-black hover:bg-gray-200 transition-colors">取消</button>
                                 </div>
                               ) : (
                                 <button onClick={(e) => handleDeleteClick(e, event)} className="text-gray-400 group-hover:text-white/50 hover:!text-white transition-colors">
@@ -398,7 +398,7 @@
                       
                       <div className="flex justify-between items-end mt-4">
                         <span className="font-display font-bold text-sm tracking-widest uppercase">
-                          {event.orders.length} Orders
+                          {event.orders.length} 份訂單
                         </span>
                         {role === 'organizer' && (
                           <span className="font-display font-black text-lg">
@@ -439,13 +439,13 @@
                   {uploading && (
                     <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center border-2 border-black">
                       <IconLoader className="w-8 h-8 mb-2" />
-                      <span className="font-display font-bold tracking-widest uppercase text-xs">Uploading</span>
+                      <span className="font-display font-bold tracking-widest uppercase text-xs">上傳中</span>
                     </div>
                   )}
                   {role === 'organizer' && !uploading && (
                     <button onClick={triggerFileInput} className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="border-2 border-white text-white font-display font-bold tracking-widest uppercase px-6 py-3 bg-black/50 hover:bg-white hover:text-black transition-colors">
-                        Change Menu
+                        更換菜單
                       </div>
                     </button>
                   )}
@@ -455,17 +455,17 @@
                   {uploading ? (
                     <div className="text-center">
                       <IconLoader className="w-8 h-8 mx-auto mb-4" />
-                      <span className="font-display font-bold tracking-widest uppercase text-sm">Uploading</span>
+                      <span className="font-display font-bold tracking-widest uppercase text-sm">上傳中</span>
                     </div>
                   ) : role === 'organizer' ? (
                     <div className="text-center">
-                      <p className="font-display font-bold tracking-widest text-gray-500 uppercase text-sm mb-6">No Menu Uploaded</p>
+                      <p className="font-display font-bold tracking-widest text-gray-500 uppercase text-sm mb-6">尚未上傳菜單</p>
                       <button onClick={triggerFileInput} className="bg-black text-white font-display font-bold tracking-[0.1em] uppercase py-3 px-8 hover:bg-gray-800 transition-colors">
-                        Upload Image
+                        上傳照片
                       </button>
                     </div>
                   ) : (
-                    <p className="font-display font-bold tracking-widest text-gray-500 uppercase text-sm">No Menu Available</p>
+                    <p className="font-display font-bold tracking-widest text-gray-500 uppercase text-sm">無菜單照片</p>
                   )}
                 </div>
               )}
@@ -475,10 +475,10 @@
             {/* Order Form */}
             {role === 'user' && !currentEvent.isClosed && (
               <section className="border-2 border-black p-6 sm:p-10 mb-16">
-                <h2 className="font-display font-black text-2xl tracking-[0.2em] uppercase mb-8 text-center">Place Order</h2>
+                <h2 className="font-display font-black text-2xl tracking-[0.2em] uppercase mb-8 text-center">我要點餐</h2>
                 <form onSubmit={handleAddOrder} className="space-y-6 max-w-lg mx-auto">
                   <div>
-                    <label className="block font-display font-bold text-xs tracking-widest text-gray-500 mb-2 uppercase">Your Name</label>
+                    <label className="block font-display font-bold text-xs tracking-widest text-gray-500 mb-2 uppercase">你的姓名</label>
                     <input 
                       type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
                       placeholder="姓名"
@@ -487,7 +487,7 @@
                     />
                   </div>
                   <div>
-                    <label className="block font-display font-bold text-xs tracking-widest text-gray-500 mb-2 uppercase">Order Item</label>
+                    <label className="block font-display font-bold text-xs tracking-widest text-gray-500 mb-2 uppercase">餐點內容</label>
                     <input 
                       type="text" value={newItem} onChange={(e) => setNewItem(e.target.value)}
                       placeholder="餐點內容"
@@ -497,7 +497,7 @@
                   </div>
                   <div className="pt-6 text-center">
                     <button type="submit" className="w-full sm:w-auto bg-black text-white border-2 border-black font-display font-bold tracking-[0.2em] uppercase py-4 px-12 hover:bg-white hover:text-black transition-colors">
-                      Submit
+                      送出點餐
                     </button>
                   </div>
                 </form>
@@ -507,7 +507,7 @@
             {/* Closed Alert */}
             {currentEvent.isClosed && (
               <div className="border-4 border-black p-6 text-center mb-16 bg-gray-100">
-                <p className="font-display font-black text-xl tracking-[0.2em] uppercase mb-2">Orders Closed</p>
+                <p className="font-display font-black text-xl tracking-[0.2em] uppercase mb-2">已停止收單</p>
                 <p className="font-display tracking-widest text-gray-500 uppercase text-xs">主購已停止收單</p>
               </div>
             )}
@@ -515,16 +515,16 @@
             {/* Orders List */}
             <section>
               <div className="flex justify-between items-end border-b-4 border-black pb-4 mb-8">
-                <h2 className="font-display font-black text-2xl tracking-[0.2em] uppercase">Orders</h2>
+                <h2 className="font-display font-black text-2xl tracking-[0.2em] uppercase">點餐清單</h2>
                 <span className="font-display font-bold tracking-widest text-sm bg-black text-white px-3 py-1 uppercase">
-                  Total: {currentEvent.orders.length}
+                  總計: {currentEvent.orders.length}
                 </span>
               </div>
               
               <div className="space-y-4">
                 {currentEvent.orders.length === 0 ? (
                   <div className="text-center py-12 text-gray-400 font-display tracking-widest uppercase text-sm">
-                    No orders yet
+                    目前沒有人點餐喔
                   </div>
                 ) : (
                   currentEvent.orders.map((order, index) => (
@@ -532,26 +532,26 @@
                       {editingOrderId === order.id && role === 'user' ? (
                         <div className="flex flex-col sm:flex-row gap-4 items-end bg-gray-50 p-4 border-2 border-black">
                           <div className="flex-1 w-full">
-                            <label className="block font-display font-bold text-[10px] tracking-widest text-gray-500 mb-1 uppercase">Name</label>
+                            <label className="block font-display font-bold text-[10px] tracking-widest text-gray-500 mb-1 uppercase">姓名</label>
                             <input 
                               type="text" defaultValue={order.name} id={`edit-name-${order.id}`}
                               className="w-full px-0 py-2 border-b-2 border-gray-300 focus:outline-none focus:border-black font-display bg-transparent text-sm"
                             />
                           </div>
                           <div className="flex-1 w-full">
-                            <label className="block font-display font-bold text-[10px] tracking-widest text-gray-500 mb-1 uppercase">Item</label>
+                            <label className="block font-display font-bold text-[10px] tracking-widest text-gray-500 mb-1 uppercase">餐點</label>
                             <input 
                               type="text" defaultValue={order.item} id={`edit-item-${order.id}`}
                               className="w-full px-0 py-2 border-b-2 border-gray-300 focus:outline-none focus:border-black font-display bg-transparent text-sm"
                             />
                           </div>
                           <div className="flex space-x-2 w-full sm:w-auto mt-4 sm:mt-0">
-                            <button onClick={() => toggleEditMode(order.id)} className="flex-1 sm:flex-none border-2 border-black px-4 py-2 font-display font-bold uppercase text-xs hover:bg-gray-100">Cancel</button>
+                            <button onClick={() => toggleEditMode(order.id)} className="flex-1 sm:flex-none border-2 border-black px-4 py-2 font-display font-bold uppercase text-xs hover:bg-gray-100">取消</button>
                             <button onClick={() => {
                                 const newN = document.getElementById(`edit-name-${order.id}`).value;
                                 const newI = document.getElementById(`edit-item-${order.id}`).value;
                                 handleUpdateOrder(order.id, newN, newI);
-                              }} className="flex-1 sm:flex-none bg-black text-white border-2 border-black px-4 py-2 font-display font-bold uppercase text-xs hover:bg-white hover:text-black transition-colors">Save</button>
+                              }} className="flex-1 sm:flex-none bg-black text-white border-2 border-black px-4 py-2 font-display font-bold uppercase text-xs hover:bg-white hover:text-black transition-colors">儲存</button>
                           </div>
                         </div>
                       ) : (
@@ -575,7 +575,7 @@
                                   onClick={() => handleTogglePaid(order.id)}
                                   className={`border-2 px-3 py-1 font-display font-bold text-xs tracking-widest uppercase transition-colors ${order.hasPaid ? 'bg-black text-white border-black' : 'bg-white text-gray-400 border-gray-200 hover:border-black hover:text-black'}`}
                                 >
-                                  {order.hasPaid ? 'PAID' : 'UNPAID'}
+                                  {order.hasPaid ? '已付款' : '未付款'}
                                 </button>
                               </>
                             ) : (
@@ -587,7 +587,7 @@
                                 )}
                                 {(order.price || currentEvent.isClosed) && (
                                   <div className={`border-2 px-2 py-1 font-display font-bold text-[10px] tracking-widest uppercase ${order.hasPaid ? 'bg-black text-white border-black' : 'bg-transparent text-gray-400 border-gray-200'}`}>
-                                    {order.hasPaid ? 'PAID' : 'UNPAID'}
+                                    {order.hasPaid ? '已付款' : '未付款'}
                                   </div>
                                 )}
                                 {!currentEvent.isClosed && (
@@ -608,7 +608,7 @@
               
               {role === 'organizer' && currentEvent.orders.length > 0 && (
                 <div className="mt-8 border-4 border-black p-6 flex justify-between items-center bg-white">
-                  <span className="font-display font-bold tracking-[0.2em] uppercase text-sm sm:text-base">Total Amount</span>
+                  <span className="font-display font-bold tracking-[0.2em] uppercase text-sm sm:text-base">總計金額</span>
                   <span className="font-display font-black text-3xl sm:text-4xl">${calculateTotal(currentEvent.orders)}</span>
                 </div>
               )}
@@ -619,7 +619,7 @@
                     onClick={toggleEventClosed}
                     className={`border-2 border-black font-display font-bold tracking-[0.2em] uppercase py-3 px-8 transition-colors ${currentEvent.isClosed ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-white hover:text-black'}`}
                   >
-                    {currentEvent.isClosed ? 'Reopen Orders' : 'Close Orders'}
+                    {currentEvent.isClosed ? '重新開放點餐' : '停止點餐 (結單)'}
                   </button>
                 </div>
               )}
@@ -640,7 +640,7 @@
                   </button>
                 )}
                 <div className="border-4 border-black px-4 sm:px-6 py-2 font-display font-bold tracking-[0.2em] text-lg sm:text-xl uppercase truncate max-w-[200px] sm:max-w-md">
-                  {currentEventId && currentEvent ? currentEvent.name : 'ORDER SYS'}
+                  {currentEventId && currentEvent ? currentEvent.name : '點餐系統'}
                 </div>
               </div>
               
@@ -649,13 +649,13 @@
                   onClick={() => handleRoleChange('user')}
                   className={`pb-1 uppercase transition-colors ${role === 'user' ? 'text-black border-b-2 border-black' : 'text-gray-400 hover:text-black'}`}
                 >
-                  User
+                  使用者
                 </button>
                 <button
                   onClick={() => handleRoleChange('organizer')}
                   className={`pb-1 uppercase transition-colors ${role === 'organizer' ? 'text-black border-b-2 border-black' : 'text-gray-400 hover:text-black'}`}
                 >
-                  Admin
+                  開團者
                 </button>
               </div>
             </div>
@@ -671,10 +671,10 @@
                 <form onSubmit={handlePasswordSubmit} className="flex flex-col space-y-8">
                   <div className="text-center">
                     <h2 className="font-display font-black text-2xl tracking-[0.2em] uppercase mb-2">
-                      {passwordPromptAction === 'delete' ? 'Delete Event' : 'Admin Access'}
+                      {passwordPromptAction === 'delete' ? '刪除開團' : '開團者驗證'}
                     </h2>
                     <p className="font-display tracking-widest text-gray-500 uppercase text-xs">
-                      {passwordPromptAction === 'delete' ? 'Enter password to delete' : 'Enter password to continue'}
+                      {passwordPromptAction === 'delete' ? '請輸入密碼以確認刪除' : '請輸入密碼以進入管理介面'}
                     </p>
                   </div>
                   
@@ -682,15 +682,15 @@
                     type="password"
                     value={eventPasswordInput}
                     onChange={(e) => setEventPasswordInput(e.target.value)}
-                    placeholder="PASSWORD"
+                    placeholder="請輸入密碼"
                     className="w-full px-0 py-4 border-b-4 border-gray-200 focus:outline-none focus:border-black font-display tracking-[0.3em] text-center text-xl transition-colors bg-transparent placeholder-gray-300"
                     autoFocus
                   />
                   {passwordError && <p className="text-black font-display font-bold text-xs tracking-widest text-center uppercase bg-gray-100 py-2">{passwordError}</p>}
                   
                   <div className="flex space-x-4 pt-4">
-                    <button type="button" onClick={() => setPasswordPromptId(null)} className="flex-1 border-2 border-black bg-white text-black font-display font-bold tracking-[0.1em] uppercase py-3 hover:bg-gray-100 transition-colors text-sm">Cancel</button>
-                    <button type="submit" className="flex-1 bg-black text-white border-2 border-black font-display font-bold tracking-[0.1em] uppercase py-3 hover:bg-white hover:text-black transition-colors text-sm">Confirm</button>
+                    <button type="button" onClick={() => setPasswordPromptId(null)} className="flex-1 border-2 border-black bg-white text-black font-display font-bold tracking-[0.1em] uppercase py-3 hover:bg-gray-100 transition-colors text-sm">取消</button>
+                    <button type="submit" className="flex-1 bg-black text-white border-2 border-black font-display font-bold tracking-[0.1em] uppercase py-3 hover:bg-white hover:text-black transition-colors text-sm">確認</button>
                   </div>
                 </form>
               </div>
