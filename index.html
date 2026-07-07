@@ -343,21 +343,19 @@
                   className="w-full px-4 py-3 border border-brand-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-brand-50/30 transition-colors"
                   required
                 />
-                <div className="flex space-x-3">
-                  <input 
-                    type="text" 
-                    value={newEventPassword}
-                    onChange={(e) => setNewEventPassword(e.target.value)}
-                    placeholder="設定密碼 (選填)"
-                    className="flex-1 px-4 py-3 border border-brand-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-brand-50/30 transition-colors"
-                  />
-                  <button 
-                    type="submit"
-                    className="bg-brand-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-brand-700 hover:shadow-lg transition-all whitespace-nowrap"
-                  >
-                    建立
-                  </button>
-                </div>
+                <input 
+                  type="text" 
+                  value={newEventPassword}
+                  onChange={(e) => setNewEventPassword(e.target.value)}
+                  placeholder="設定密碼 (選填)"
+                  className="w-full px-4 py-3 border border-brand-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-brand-50/30 transition-colors"
+                />
+                <button 
+                  type="submit"
+                  className="w-full bg-brand-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-brand-700 hover:shadow-lg transition-all"
+                >
+                  建立開團
+                </button>
               </div>
             </form>
           )}
